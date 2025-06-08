@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/Spinner";
+import { addAbortListener } from "events";
 
 const GENRES = ["Pop", "Hip-hop", "Rock", "Fado", "jazz"];
 
@@ -10,6 +11,7 @@ export default function Home() {
 
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
 
   const fetchTop10 = async (selectedGenre: string) => {
     setLoading(true);
@@ -28,6 +30,15 @@ export default function Home() {
       setTracks([]);
     }
     setLoading(false);
+  };
+
+  const handleClick = (spotifyUrl: string) => {
+    const trackId = spotifyUrl.split("track/")[1]?.split("?")[0];
+    setSelectedTrackId(trackId);
+  };
+
+  const formattedFollowers = (x) => {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
   useEffect(() => {
@@ -75,6 +86,7 @@ export default function Home() {
               const selected = e.target.value;
               setGenre(selected);
               fetchAndLoadGenre(selected);
+              setSelectedTrackId(null);
             }}
             className="min-w-[12rem] p-2 px-4 text-xl text-center rounded-md"
           >
@@ -96,13 +108,12 @@ export default function Home() {
             <Spinner className="text-white"></Spinner>
           </div>
         ) : tracks.length > 0 ? (
-          <div className="w-[80%] m-auto p-4 grid justify-center items-start h-full">
+          <div className="relative w-[80%] m-auto p-4 grid justify-center items-start h-full">
             <div className="relative flex flex-wrap mt-12 justify-center gap-8 items-center">
               {tracks.map((track: any, i: number) => (
                 <a
                   key={i}
-                  href={track.spotify_url}
-                  target="_blank"
+                  onClick={() => handleClick(track.spotify_url)}
                   className="group overflow-hidden rounded-xl w-[16rem] h-[16rem] cursor-pointer hover:shadow-none"
                 >
                   <div className="relative flex flex-col text-black transition-all">
@@ -112,8 +123,16 @@ export default function Home() {
                       className="w-full aspect-square"
                     />
                     <div className="bg-black bg-opacity-90 w-full h-full absolute flex flex-col justify-center items-center gap-2 pt-2 p-4 translate-y-[200%] group-hover:translate-y-[0%] transition-all text-white">
+                      <h1 className="bg-white text-center rounded-full aspect-square text-black">
+                        {track.popularity}
+                      </h1>
+
                       <h2 className="text-2xl">{track.artist_name}</h2>
-                      <p>{track.followers} Seguidores</p>
+
+                      <div className="flex gap-2">
+                        {formattedFollowers(track.followers)}
+                        <p> Seguidores</p>
+                      </div>
                       <p>{track.genre}</p>
                       <p className="text-center">{track.track_name}</p>
                       <p>{track.release_date}</p>
@@ -121,6 +140,21 @@ export default function Home() {
                   </div>
                 </a>
               ))}
+            </div>
+            <div className=" backdrop-blur-0  text-white w-full flex justify-center items-center">
+              {selectedTrackId ? (
+                <iframe
+                  src={`https://open.spotify.com/embed/track/${selectedTrackId}`}
+                  width="640"
+                  height="200"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  className="rounded  pink-50"
+                ></iframe>
+              ) : (
+                <p></p>
+              )}
             </div>
           </div>
         ) : (
@@ -133,8 +167,21 @@ export default function Home() {
           </div>
         )
       ) : (
-        <div className=" h-full w-full grid justify-center items-center p-4 rounded text-white">
-          Nenhum gênero selecionado.
+        <div className=" mt-36 text-center text-xl  w-[55%] m-auto grid justify-center items-center p-4 rounded text-white">
+          <p>
+            <strong> Spotify Data Explorer</strong> é uma aplicação interativa
+            que permite aos utilizadores explorarem as músicas mais populares
+            por género musical. <br></br> Baseado numa lista de 4 género
+            musicais diferentes, cada uma com os artistas relacionados, são
+            extraidas da base de dados pública do Spotify e apresentadas ao
+            utilizador informações como o grau de popularidade (100 = mais
+            popular), o nome do artista, a música, albúm, número de seguidores,
+            e um excerto da música no Spotify incoporado na aplicação.
+            <br></br>
+            Esta aplicação serve como uma pequena amostra funcional do que
+            poderia ser uma plataforma mais extensa de análise de tendências
+            musicais tendo acesso à base de dados na sua totalidade.
+          </p>
         </div>
       )}
     </div>

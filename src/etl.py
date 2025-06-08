@@ -15,16 +15,12 @@ def fetch_top10_by_genre(genre):
     token = get_token()
     artists = search_artists_by_genre(genre, token)
 
-    print(f"🎯 Foram encontrados {len(artists)} artistas para o género '{genre}'")
-    for artist in artists:
-      print("👤", artist["name"])
-
     records = []
 
     for artist in artists:
         artist_name = artist["name"]
         artist_id = artist["id"]
-        print(f"🎤 {artist_name}")
+
 
                 # Obter info do artista
         artist_info_url = f"https://api.spotify.com/v1/artists/{artist_id}"
@@ -66,12 +62,18 @@ def fetch_top10_by_genre(genre):
     if not records:
         print("Nenhum dado encontrado.")
         return
+    
+     # Ordena pelo campo de popularidade da faixa
+    records = sorted(records, key=lambda r: r["popularity"], reverse=True)
 
-    df = pd.DataFrame(records)
+    # Filtra apenas os 10 mais populares
+    top10 = records[:10]
+
+
+    df = pd.DataFrame(top10)
     today = datetime.now().strftime("%Y-%m-%d")
     filename = f"top10_{genre}_{today}.csv"
     df.to_csv(DATA_DIR / filename, index=False)
-    print(f"✅ CSV salvo em data/{filename}")
 
 
 

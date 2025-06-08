@@ -52,7 +52,7 @@ export async function POST(request) {
 
       try {
         await waitForFile(csvPath); // espera até o ficheiro existir
-        console.log("✅ CSV gerado:", csvPath);
+
         resolve(
           new Response(JSON.stringify({ success: true }), {
             status: 200,
