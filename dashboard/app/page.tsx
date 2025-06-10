@@ -2,33 +2,57 @@
 
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/Spinner";
-import { addAbortListener } from "events";
-
-const GENRES = ["Pop", "Hip-hop", "Rock", "Fado", "jazz"];
+import GenreDropdown from "@/components/Dropdown";
 
 export default function Home() {
-  const [genre, setGenre] = useState("");
-
+  const [selectedGenre, setSelectedGenre] = useState<string>("");
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
+  const [isShrunk, setIsShrunk] = useState(true);
+  const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
 
   const fetchTop10 = async (selectedGenre: string) => {
+    console.log("Fetching top 10 for:", selectedGenre);
     setLoading(true);
+
     try {
-      const res = await fetch(`/api/top10?genre=${selectedGenre}`);
-      const data = await res.json();
-      console.log(data);
-      if (!Array.isArray(data)) {
-        console.warn("dados nao sao array:", data);
+      const res = await fetch("/api/recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ genre: selectedGenre.toLowerCase() }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("Server error:", res.status, errText);
         setTracks([]);
-      } else {
-        setTracks(data);
+        return;
       }
+
+      const data = await res.json();
+      const formatted = data.tracks.items.map((track: any) => {
+        const [year, month, day] = track.album.release_date.split("-");
+        const formattedDate = `${day}-${month}-${year}`;
+
+        return {
+          track_name: track.name,
+          artist_name: track.artists[0]?.name,
+          artist_url: track.artists[0]?.external_urls?.spotify,
+          spotify_url: track.external_urls.spotify,
+          album_cover_url: track.album.images[0]?.url,
+          release_date: formattedDate,
+          genre: selectedGenre,
+          popularity: track.popularity,
+        };
+      });
+
+      setTracks(formatted);
     } catch (error) {
-      console.error("Erro ao buscar top 10:", error);
+      console.error("Erro ao buscar recomendações do Spotify:", error);
       setTracks([]);
     }
+
     setLoading(false);
   };
 
@@ -37,32 +61,11 @@ export default function Home() {
     setSelectedTrackId(trackId);
   };
 
-  const formattedFollowers = (x) => {
-    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  };
-
   useEffect(() => {
-    fetchTop10(genre);
-  }, [genre]);
-
-  const fetchAndLoadGenre = async (selectedGenre: string) => {
-    setLoading(true);
-
-    // Step 1: Run the ETL first
-    await fetch("/api/extract", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ genre: selectedGenre }),
-    });
-
-    // Step 2: Then load the CSV content
-    const res = await fetch(`/api/top10?genre=${selectedGenre}`);
-    const data = await res.json();
-    setTracks(Array.isArray(data) ? data : []);
-    setLoading(false);
-
-    console.log("🎯 A lançar ETL para:", selectedGenre);
-  };
+    if (selectedGenre) {
+      fetchTop10(selectedGenre);
+    }
+  }, [selectedGenre]);
 
   return (
     <div
@@ -70,98 +73,129 @@ export default function Home() {
      justify-center h-screen "
     >
       <div className="flex flex-col justify-start p-4  w-full text-white">
-        {genre ? (
+        {selectedGenre ? (
           <h1 className="text-3xl text-center font-bold mb-4 uppercase">
-            Top 10 - {genre}
+            Top - {selectedGenre}
           </h1>
         ) : (
           <h1 className="text-3xl text-center font-bold mb-4 uppercase">
-            Spotify Data Explorer
+            Spotify Top Recommendations by Genre
           </h1>
         )}
         <div className="text-black p-2 text-center ">
-          <select
-            value={genre}
-            onChange={(e) => {
-              const selected = e.target.value;
-              setGenre(selected);
-              fetchAndLoadGenre(selected);
-              setSelectedTrackId(null);
-            }}
-            className="min-w-[12rem] p-2 px-4 text-xl text-center rounded-md"
-          >
-            <option value="" disabled hidden>
-              Seleciona o TOP 10
-            </option>
-            {GENRES.map((g) => (
-              <option key={g} value={g}>
-                {g.charAt(0).toUpperCase() + g.slice(1)}
-              </option>
-            ))}
-          </select>
+          <GenreDropdown
+            selectedGenre={selectedGenre}
+            onGenreChange={setSelectedGenre}
+          />
         </div>
       </div>
 
-      {genre ? (
+      {/* If a genre is selected and it's still loading, a spinner will appear. If it's not loading, a grid with the songs will appear. If a genre is not selected info about the app will appear */}
+      {selectedGenre ? (
         loading ? (
           <div className="h-screen w-full p-4 grid justify-center items-center ">
             <Spinner className="text-white"></Spinner>
           </div>
-        ) : tracks.length > 0 ? (
-          <div className="relative w-[80%] m-auto p-4 grid justify-center items-start h-full">
-            <div className="relative flex flex-wrap mt-12 justify-center gap-8 items-center">
-              {tracks.map((track: any, i: number) => (
-                <a
-                  key={i}
-                  onClick={() => handleClick(track.spotify_url)}
-                  className="group overflow-hidden rounded-xl w-[16rem] h-[16rem] cursor-pointer hover:shadow-none"
-                >
-                  <div className="relative flex flex-col text-black transition-all">
-                    <img
-                      src={track.album_cover_url}
-                      alt={track.artist_name}
-                      className="w-full aspect-square"
-                    />
-                    <div className="bg-black bg-opacity-90 w-full h-full absolute flex flex-col justify-center items-center gap-2 pt-2 p-4 translate-y-[200%] group-hover:translate-y-[0%] transition-all text-white">
-                      <h1 className="bg-white text-center rounded-full aspect-square text-black">
-                        {track.popularity}
-                      </h1>
+        ) : Array.isArray(tracks) && tracks.length > 0 ? (
+          <section className="relative grid">
+            <div className="relative w-[80%] m-auto mb-36 p-4 grid justify-center items-start h-full">
+              <div className="relative flex flex-wrap mt-12 justify-center gap-8 items-center">
+                {/* For each song make a card with their info */}
+                {tracks.map((track: any, i: number) => (
+                  <a
+                    key={i}
+                    onClick={() => {
+                      handleClick(track.spotify_url);
+                      setSelectedTrack(track);
+                      setIsShrunk(false);
+                    }}
+                    className="group overflow-hidden rounded-xl w-[16rem] h-[16rem] cursor-pointer hover:shadow-none"
+                  >
+                    <div className="relative flex flex-col text-black transition-all">
+                      <img
+                        src={track.album_cover_url}
+                        alt={track.artist_name}
+                        className="w-full aspect-square"
+                      />
+                      <div className="bg-black bg-opacity-90 w-full h-full absolute flex flex-col justify-center items-center gap-2 pt-2 p-4 translate-y-[200%] group-hover:translate-y-[0%] transition-all text-white">
+                        <h1 className="bg-white text-center rounded-full aspect-square text-black p-1">
+                          {track.popularity}
+                        </h1>
 
-                      <h2 className="text-2xl">{track.artist_name}</h2>
+                        <h1>
+                          <a
+                            href={track.artist_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-green-400"
+                          >
+                            {track.artist_name}
+                          </a>
+                        </h1>
 
-                      <div className="flex gap-2">
-                        {formattedFollowers(track.followers)}
-                        <p> Seguidores</p>
+                        <p className="text-center font-extrabold ">
+                          {" "}
+                          {track.track_name}
+                        </p>
+                        <p>{track.release_date}</p>
                       </div>
-                      <p>{track.genre}</p>
-                      <p className="text-center">{track.track_name}</p>
-                      <p>{track.release_date}</p>
                     </div>
-                  </div>
-                </a>
-              ))}
+                  </a>
+                ))}
+              </div>
             </div>
-            <div className=" backdrop-blur-0  text-white w-full flex justify-center items-center">
-              {selectedTrackId ? (
-                <iframe
-                  src={`https://open.spotify.com/embed/track/${selectedTrackId}`}
-                  width="640"
-                  height="200"
-                  frameBorder="0"
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                  loading="lazy"
-                  className="rounded  pink-50"
-                ></iframe>
+            <div
+              className={`z-10 fixed right-0 top-0 backdrop-blur-0 h-screen bg-black flex justify-center items-center p-4 transition-all duration-300 ${
+                isShrunk ? "w-[0%]" : "w-[50%]"
+              }`}
+            >
+              <div
+                className=" backdrop-blur-0  text-white w-full flex justify-center items-center"
+                style={{
+                  backgroundImage: selectedTrack
+                    ? `url(${selectedTrack.album_cover_url})`
+                    : "none",
+                  backgroundSize: "cover",
+                  height: "100%",
+                  borderRadius: "2%",
+                  opacity: "95%",
+                  // backgroundPosition: "center",⁄
+                }}
+              >
+                {/* if a card is clicked show a spotify embebed with the corresponding song */}
+                {selectedTrackId ? (
+                  <iframe
+                    src={`https://open.spotify.com/embed/track/${selectedTrackId}`}
+                    width={isShrunk ? "0" : "640"}
+                    height={isShrunk ? "0" : "200"}
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    className="rounded"
+                  ></iframe>
+                ) : (
+                  <p></p>
+                )}
+              </div>
+              {!isShrunk ? (
+                <button
+                  className="absolute top-8 right-8 aspect-square text-white bg-black rounded-full p-4 min-h-4 min-w-4 hover:bg-slate-300 hover:text-black flex justify-center items-center transition-all"
+                  onClick={() => setIsShrunk(true)}
+                >
+                  <p>X</p>
+                </button>
               ) : (
-                <p></p>
+                <button
+                  className="absolute top-0 right-0 text-white p-4"
+                  onClick={() => setIsShrunk(true)}
+                ></button>
               )}
             </div>
-          </div>
+          </section>
         ) : (
           <div className="h-screen w-full p-4 grid justify-center items-center ">
             <Spinner className="text-white">
-              <span className="text-white pt-4">
-                A carregar TOP 10 músicas de {genre}{" "}
+              <span className="text-white pt-4 capitalize">
+                A carregar o top músicas de {selectedGenre}{" "}
               </span>
             </Spinner>
           </div>
