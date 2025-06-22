@@ -5,6 +5,14 @@
 
 @layer base {
   :root {
+    --hdr-gradient: linear-gradient(
+      285deg in oklab,
+      oklch(39% 0.17 265) 16% 0%,
+      63%,
+      oklch(11% 0.1 146) 100%
+    );
+    --sdr-gradient: linear-gradient(285deg, #16389e 16% 0%, 63%, #000a00 100%);
+
     --background: 0 0% 100%;
 
     --foreground: 0 0% 3.9%;
@@ -106,6 +114,24 @@
   }
 }
 
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+body {
+  background: var(--hdr-gradient);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+  color: white;
+}
 @layer base {
   * {
     @apply border-border;

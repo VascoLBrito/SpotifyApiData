@@ -9,18 +9,22 @@ type Genre = {
 
 export default function GenreDropdown({
   selectedGenre,
-  onGenreChange,
+  setSelectedGenre,
 }: {
   selectedGenre: string;
-  onGenreChange: (genre: string) => void;
+  setSelectedGenre: (genre: string) => void;
 }) {
   const [genres, setGenres] = useState<Genre[]>([]);
 
   useEffect(() => {
     const fetchGenres = async () => {
-      const res = await fetch("/spotify_genres.json");
-      const data = await res.json();
-      setGenres(data);
+      try {
+        const res = await fetch("/spotify_genres.json");
+        const data = await res.json();
+        setGenres(data);
+      } catch (err) {
+        console.error("❌ Failed to load genres:", err);
+      }
     };
 
     fetchGenres();
@@ -29,10 +33,11 @@ export default function GenreDropdown({
   return (
     <select
       value={selectedGenre}
-      onChange={(e) => onGenreChange(e.target.value)}
-      className="min-w-[12rem] p-2 px-4 text-xl text-center rounded-md capitalize"
+      onChange={(e) => setSelectedGenre(e.target.value)}
+      className="w-full p-2 px-4 text-xl text-center rounded-md capitalize"
     >
-      <option value="">Seleciona um Estilo</option>
+      <option value="">Todos os géneros</option>
+
       {genres.map((genre) => (
         <option key={genre.id} value={genre.name} className="capitalize">
           {genre.name}
