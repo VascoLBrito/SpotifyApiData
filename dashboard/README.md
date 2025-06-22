@@ -8,7 +8,6 @@ An interactive web app that lets you explore your Spotify listening habits — i
 - **Select a time range** (last month, last 6 months, or all time)
 - **View your top artists, tracks, and genres**
 - **Interactive UI** with hover effects and embedded Spotify players
-- **Circular charts** showing how much of each artist’s discography you've listened to
 - **Dynamic detail panel** with previews and external links
 
 ## 📁 Project Structure
