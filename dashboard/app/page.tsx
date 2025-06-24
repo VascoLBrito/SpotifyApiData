@@ -20,6 +20,7 @@ export default function Home() {
   const [timeRange, setTimeRange] = useState("");
 
   const [wrappedLoading, setWrappedLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   const fetchWrapped = async (range = timeRange) => {
     if (!userAccessToken || wrappedLoading) return;
@@ -66,14 +67,48 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const tokenFromUrl = new URLSearchParams(window.location.search).get(
-      "token"
-    );
-    if (tokenFromUrl) {
-      setUserAccessToken(tokenFromUrl);
-      setTimeRange("long_term"); // apenas uma vez ao montar
+    const urlToken = new URLSearchParams(window.location.search).get("token");
+    const localToken = localStorage.getItem("spotify_access_token");
+
+    if (urlToken) {
+      setUserAccessToken(urlToken);
+      localStorage.setItem("spotify_access_token", urlToken);
+      setTimeRange("long_term");
+    } else if (localToken) {
+      setUserAccessToken(localToken);
+      setTimeRange("long_term");
     }
+
+    setAuthChecked(true); // <- isto garante que já verificámos o token
   }, []);
+
+  useEffect(() => {
+    const fetchTokenAndWrapped = async () => {
+      try {
+        const res = await fetch("/api/auth/token");
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.access_token) {
+          setUserAccessToken(data.access_token);
+          setTimeRange("long_term"); // or let user pick it
+        }
+      } catch (err) {
+        console.error("❌ Failed to get token from cookie:", err);
+      }
+    };
+
+    fetchTokenAndWrapped();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout");
+      window.location.href = "/";
+    } catch (err) {
+      console.error("❌ Logout failed:", err);
+    }
+  };
 
   useEffect(() => {
     if (userAccessToken && timeRange) {
@@ -96,8 +131,8 @@ export default function Home() {
 
   return (
     <div className="mt-12 p-6">
-      {!userAccessToken ? (
-        <div className="grid gap-12 min-h-screen">
+      {!userAccessToken && (
+        <div className="grid gap-12 h-screen overflow-hidden">
           <div className="text-white text-center max-w-3xl mx-auto mt-20 px-4">
             <h2 className="text-3xl font-bold mb-4">
               Welcome to Spotify Wrapped Explorer 🎧
@@ -117,17 +152,18 @@ export default function Home() {
               data.
             </p>
           </div>
-  
+
           <div className="w-auto m-auto bg-amber-200">
             <a
-              href="http://127.0.0.1:3000/api/auth/login"
+              href="/api/auth/login"
               className="bg-slate-500 rounded-md p-4 hover:bg-slate-300 hover:text-black transition-all cursor-pointer"
             >
-              LOGIN IN{" "}
+              LOGIN{" "}
             </a>
           </div>
         </div>
-      ) : (
+      )}
+      {userAccessToken && (
         <div className="min-h-screen">
           {wrappedLoading ? (
             <div className="flex justify-center items-center min-h-[50vh]">
@@ -143,7 +179,7 @@ export default function Home() {
                 onTimeRangeChange={handleTimeRangeChange}
                 timeRange={timeRange}
               />
-  
+
               <SpotifyDetailPanel
                 embedId={selectedTrackId}
                 imageUrl={selectedTrack?.album_cover_url || "/fallback.png"}
@@ -153,8 +189,14 @@ export default function Home() {
               />
             </>
           )}
+          <button
+            onClick={handleLogout}
+            className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded"
+          >
+            Logout
+          </button>
         </div>
       )}
     </div>
   );
-  
+}

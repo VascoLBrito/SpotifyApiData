@@ -15,18 +15,9 @@ export default function WrappedSection({
   onItemClick: (id: string, imageUrl: string, type: "track" | "artist") => void;
   onTimeRangeChange: (range: string) => void;
 }) {
-  const [selectedRange, setSelectedRange] = useState("");
-
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    const token = new URLSearchParams(window.location.search).get("token");
-    setAccessToken(token);
-  }, []);
-
   const handleRangeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setSelectedRange(value);
+
     onTimeRangeChange(value);
   };
 
