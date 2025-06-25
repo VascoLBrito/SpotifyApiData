@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/Spinner";
-
 import WrappedSection from "@/components/Wrapped";
 import SpotifyDetailPanel from "@/components/DetailPannel";
 
@@ -65,22 +64,6 @@ export default function Home() {
   const handleTimeRangeChange = (range: string) => {
     setTimeRange(range); // por exemplo, e depois refaz o fetch do wrapped com esse valor
   };
-
-  useEffect(() => {
-    const urlToken = new URLSearchParams(window.location.search).get("token");
-    const localToken = localStorage.getItem("spotify_access_token");
-
-    if (urlToken) {
-      setUserAccessToken(urlToken);
-      localStorage.setItem("spotify_access_token", urlToken);
-      setTimeRange("long_term");
-    } else if (localToken) {
-      setUserAccessToken(localToken);
-      setTimeRange("long_term");
-    }
-
-    setAuthChecked(true); // <- isto garante que já verificámos o token
-  }, []);
 
   useEffect(() => {
     const fetchTokenAndWrapped = async () => {
