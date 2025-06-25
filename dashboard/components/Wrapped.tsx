@@ -59,12 +59,12 @@ export default function WrappedSection({
         {/* artistas */}
         <div className="flex flex-col justify-center items-center gap-8">
           <h3 className="text-2xl font-semibold mb-4">Top Artistas</h3>
-          <div className="flex flex-wrap gap-6">
+          <div className="flex flex-wrap gap-6 justify-center items-center">
             {Array.isArray(topArtists) &&
               topArtists.map((artist, index) => (
                 <div
                   key={artist.id}
-                  className="relative w-44 h-44 flex-grow aspect-square rounded-xl overflow-hidden group shadow-lg"
+                  className="relative w-44 h-44 aspect-square rounded-xl overflow-hidden group shadow-lg"
                   style={{
                     backgroundImage: `url(${
                       artist.images[0]?.url || "/fallback.png"
@@ -106,7 +106,7 @@ export default function WrappedSection({
                 topTracks.map((track, index) => (
                   <div
                     key={track.id}
-                    className="relative w-44 h-44 flex-grow aspect-square rounded-xl overflow-hidden group shadow-lg"
+                    className="relative w-44 h-44 aspect-square rounded-xl overflow-hidden group shadow-lg"
                     style={{
                       backgroundImage: `url(${
                         track.album?.images?.[0]?.url || "/fallback.png"

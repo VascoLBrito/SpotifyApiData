@@ -10,16 +10,33 @@ export default function Home() {
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [isShrunk, setIsShrunk] = useState(true);
   const [selectedTrack, setSelectedTrack] = useState<any | null>(null);
-
   const [userTopArtists, setUserTopArtists] = useState([]);
   const [userTopTracks, setUserTopTracks] = useState([]);
   const [userTopGenres, setUserTopGenres] = useState([]);
-
   const [userAccessToken, setUserAccessToken] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState("");
-
   const [wrappedLoading, setWrappedLoading] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const res = await fetch("https://api.spotify.com/v1/me", {
+          headers: {
+            Authorization: `Bearer ${userAccessToken}`,
+          },
+        });
+        const data = await res.json();
+        setUserProfile(data);
+      } catch (err) {
+        console.error("❌ Failed to fetch user profile:", err);
+      }
+    };
+
+    if (userAccessToken) {
+      fetchUserProfile();
+    }
+  }, [userAccessToken]);
 
   const fetchWrapped = async (range = timeRange) => {
     if (!userAccessToken || wrappedLoading) return;
@@ -154,31 +171,50 @@ export default function Home() {
             </div>
           ) : (
             <>
-              <WrappedSection
-                topArtists={userTopArtists}
-                topTracks={userTopTracks}
-                topGenres={userTopGenres}
-                onItemClick={handleItemClick}
-                onTimeRangeChange={handleTimeRangeChange}
-                timeRange={timeRange}
-              />
+              {userProfile && (
+                <div className="absolute px-4 top-0 left-0 w-screen flex items-center justify-between gap-4 text-white">
+                  <div className="py-2 flex gap-4 justify-center items-center">
+                    {userProfile.images?.[0]?.url && (
+                      <img
+                        src={userProfile.images[0].url}
+                        alt="Profile"
+                        className="w-10 h-10 rounded-full aspect-square"
+                      />
+                    )}
+                    <h3 className="font-semibold">
+                      {userProfile.display_name}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className=" bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    {" "}
+                    Logout{" "}
+                  </button>
+                </div>
+              )}
 
-              <SpotifyDetailPanel
-                embedId={selectedTrackId}
-                imageUrl={selectedTrack?.album_cover_url || "/fallback.png"}
-                isOpen={!isShrunk}
-                onClose={() => setIsShrunk(true)}
-                type="track"
-              />
+              <div>
+                <WrappedSection
+                  topArtists={userTopArtists}
+                  topTracks={userTopTracks}
+                  topGenres={userTopGenres}
+                  onItemClick={handleItemClick}
+                  onTimeRangeChange={handleTimeRangeChange}
+                  timeRange={timeRange}
+                />
+
+                <SpotifyDetailPanel
+                  embedId={selectedTrackId}
+                  imageUrl={selectedTrack?.album_cover_url || "/fallback.png"}
+                  isOpen={!isShrunk}
+                  onClose={() => setIsShrunk(true)}
+                  type="track"
+                />
+              </div>
             </>
           )}
-          <button
-            onClick={handleLogout}
-            className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded"
-          >
-            {" "}
-            Logout{" "}
-          </button>
         </div>
       )}
     </div>

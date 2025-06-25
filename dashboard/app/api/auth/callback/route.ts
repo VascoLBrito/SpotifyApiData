@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   const tokenData = await tokenRes.json();
 
   if (tokenData.access_token) {
-    const res = NextResponse.redirect("http://127.0.0.1:3000/");
+    const res = NextResponse.redirect("http://127.0.0.1:3000");
 
     res.cookies.set("spotify_token", tokenData.access_token, {
       httpOnly: true,
