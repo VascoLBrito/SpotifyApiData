@@ -145,7 +145,7 @@ export default function Home() {
             <p className="text-md text-gray-400 mt-4">
               Choose a time range from the dropdown menu above — whether it’s
               your recent month, last 6 months, or all-time favorites. Let's
-              Start
+              Start.
             </p>
             <p className="text-md text-gray-500 mt-6 italic">
               Note: You must be logged in with Spotify to access your listening

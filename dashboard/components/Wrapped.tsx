@@ -24,9 +24,9 @@ export default function WrappedSection({
   return (
     <section className="w-full p-8 text-white flex flex-col gap-12">
       <div className="text-center">
-        <h2 className="text-4xl font-bold mb-2">O teu Spotify</h2>
+        <h2 className="text-4xl font-bold mb-2">Your Spotify</h2>
         <p className="text-lg text-gray-300">
-          Baseado nos artistas e nas músicas mais ouvidas
+          Your most listened artist and songs.
         </p>
         <div className="mt-4">
           <select
@@ -34,16 +34,16 @@ export default function WrappedSection({
             onChange={handleRangeChange}
             className="bg-slate-600 text-white px-6 py-2 text-center rounded-2xl cursor-pointer hover:bg-slate-500 transition-all"
           >
-            <option value="short_term">Último mês</option>
-            <option value="medium_term">Últimos 6 meses</option>
-            <option value="long_term">Desde sempre</option>
+            <option value="short_term">Last Month</option>
+            <option value="medium_term">Last 6 Month</option>
+            <option value="long_term">Since the Beginning</option>
           </select>
         </div>
       </div>
 
       <div className="flex flex-col gap-14 w-[70%] m-auto">
         <div className="flex flex-col justify-center items-center">
-          <h3 className="text-2xl font-semibold mb-4">Top Géneros</h3>
+          <h3 className="text-2xl font-semibold mb-4">Top Styles</h3>
           <ul className="flex flex-wrap gap-3">
             {Array.isArray(topGenres) &&
               topGenres.map((genre, index) => (
@@ -58,7 +58,7 @@ export default function WrappedSection({
         </div>
         {/* artistas */}
         <div className="flex flex-col justify-center items-center gap-8">
-          <h3 className="text-2xl font-semibold mb-4">Top Artistas</h3>
+          <h3 className="text-2xl font-semibold mb-4">Top Artists</h3>
           <div className="flex flex-wrap gap-6 justify-center items-center">
             {Array.isArray(topArtists) &&
               topArtists.map((artist, index) => (
@@ -100,7 +100,7 @@ export default function WrappedSection({
         <div>
           {/* tracks */}
           <div className="flex flex-col justify-center items-center gap-8">
-            <h3 className="text-2xl font-semibold mb-4">Top Músicas</h3>
+            <h3 className="text-2xl font-semibold mb-4">Top Songs</h3>
             <div className="flex flex-wrap gap-6 justify-center items-center">
               {Array.isArray(topTracks) &&
                 topTracks.map((track, index) => (
